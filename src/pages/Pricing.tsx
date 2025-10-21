@@ -61,7 +61,9 @@ const Pricing: React.FC = () => {
     },
   ];
 
-  const handlePurchase = async (tier: "basic" | "pro" | "enterprise") => {
+  const handlePurchase = async (
+    tier: "test" | "basic" | "pro" | "enterprise"
+  ) => {
     if (!email) {
       alert("Please enter your email address");
       return;

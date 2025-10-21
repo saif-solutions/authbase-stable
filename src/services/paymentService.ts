@@ -8,7 +8,7 @@ export const paymentService = {
   },
 
   async createCheckoutSession(
-    tier: "basic" | "pro" | "enterprise",
+    tier: "test" | "basic" | "pro" | "enterprise", // Add "test" here
     email: string
   ) {
     const response = await fetch(`${API_URL}/payments/create-checkout`, {
@@ -29,8 +29,7 @@ export const paymentService = {
 
   async verifyLicense(key: string) {
     // For now, mock verification since database is disabled
-    // Log the key for ESLint compliance
-    console.log("Verifying license:", key);
+    console.log("License verification for:", key);
     return { valid: true, tier: "pro", expiresAt: "2024-12-31" };
   },
 };

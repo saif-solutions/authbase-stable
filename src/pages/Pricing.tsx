@@ -5,10 +5,23 @@ const Pricing: React.FC = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [email, setEmail] = useState("");
 
+  // Update the pricingTiers array in src/pages/Pricing.tsx
   const pricingTiers = [
     {
+      name: "Test",
+      price: "$5",
+      description: "Perfect for testing the payment system",
+      features: [
+        "Up to 10 users",
+        "Basic authentication",
+        "Test environment",
+        "24-hour support response",
+      ],
+      tier: "test" as const,
+    },
+    {
       name: "Basic",
-      price: "$89",
+      price: "$49",
       description: "Perfect for small projects",
       features: [
         "Up to 1,000 users",

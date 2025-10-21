@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || "https://authbase-pro.onrender.com/api";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://authbase-pro.onrender.com/api";
 
 export const paymentService = {
   async getPricing() {
@@ -6,26 +7,29 @@ export const paymentService = {
     return response.json();
   },
 
-  async createCheckoutSession(tier: 'basic' | 'pro' | 'enterprise', email: string) {
+  async createCheckoutSession(
+    tier: "basic" | "pro" | "enterprise",
+    email: string
+  ) {
     const response = await fetch(`${API_URL}/payments/create-checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier, email })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tier, email }),
     });
-    
+
     const data = await response.json();
-    
-    if (data.url) {
+
+    if (data.checkoutUrl) {
       // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      window.location.href = data.checkoutUrl;
     }
-    
+
     return data;
   },
 
   async verifyLicense(key: string) {
     // For now, mock verification since database is disabled
-    console.log('License verification for:', key);
-    return { valid: true, tier: 'pro', expiresAt: '2024-12-31' };
-  }
+    console.log("License verification for:", key);
+    return { valid: true, tier: "pro", expiresAt: "2024-12-31" };
+  },
 };

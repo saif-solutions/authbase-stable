@@ -8,12 +8,29 @@ export const paymentService = {
   },
 
   async createCheckoutSession(
-    tier: "test" | "basic" | "pro" | "enterprise", // Add "test" here
+    tier: "test" | "basic" | "pro" | "enterprise",
     email: string
   ) {
+    // First get CSRF token
+    const csrfResponse = await fetch(`${API_URL}/csrf-token`, {
+      credentials: "include",
+    });
+
+    if (!csrfResponse.ok) {
+      throw new Error("Failed to get CSRF token");
+    }
+
+    const csrfData = await csrfResponse.json();
+    const csrfToken = csrfData.csrfToken;
+
+    // Then create checkout session with CSRF token
     const response = await fetch(`${API_URL}/payments/create-checkout`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "CSRF-Token": csrfToken,
+      },
+      credentials: "include",
       body: JSON.stringify({ tier, email }),
     });
 

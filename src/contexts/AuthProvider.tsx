@@ -8,43 +8,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is already logged in on app start
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        console.log("🔧 DEBUG: Initializing auth state...");
+    // TEMPORARY FIX: Skip auth check completely to break the loop
+    console.log("🔧 DEBUG: SKIPPING auth check to break redirect loop");
+    setIsLoading(false);
+    setIsInitialized(true);
+    setUser(null); // Assume not logged in initially
 
-        const response = await fetch(
-          "https://authbase-pro.onrender.com/api/auth/me",
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
-
-        if (response.status === 401) {
-          // 401 is NORMAL - user is not logged in
-          console.log("🔧 DEBUG: User not authenticated (normal)");
-          setUser(null);
-        } else if (response.ok) {
-          const data = await response.json();
-          console.log("🔧 DEBUG: User found:", data.user.email);
-          setUser(data.user);
-        } else {
-          // Other errors - don't get stuck in loop
-          console.log("🔧 DEBUG: Auth check failed, but not 401");
-          setUser(null);
-        }
-      } catch (error) {
-        // Network errors - don't get stuck in loop
-        console.error("🔧 DEBUG: Auth initialization error:", error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-        setIsInitialized(true);
-        console.log("🔧 DEBUG: Auth initialization complete");
-      }
-    };
-
-    initializeAuth();
+    // We'll enable proper auth check after login is working
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {

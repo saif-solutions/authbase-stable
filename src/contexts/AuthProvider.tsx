@@ -56,12 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify({
+            email,
+            password,
+            confirmPassword: password, // ← ADD THIS LINE
+            name,
+          }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.log("🔧 DEBUG: Backend validation errors:", errorData);
         throw new Error(errorData.error || "Registration failed");
       }
 

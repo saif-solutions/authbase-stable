@@ -1,11 +1,5 @@
 import { useEffect, useState, ReactNode } from "react";
 import { AuthContext, AuthContextType, User } from "./AuthContext";
-import {
-  login as apiLogin,
-  register as apiRegister,
-  logout as apiLogout,
-  getCurrentUser,
-} from "../services/authAPI";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -17,16 +11,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       try {
         console.log("🔧 DEBUG: Initializing auth state...");
-        const userData = await getCurrentUser();
 
-        if (userData) {
+        // Use direct fetch instead of authAPI to avoid circular dependencies
+        const response = await fetch(
+          "https://authbase-pro.onrender.com/api/auth/me",
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
           console.log(
             "🔧 DEBUG: User found on initialization:",
-            userData.email
+            data.user.email
           );
-          setUser(userData);
+          setUser(data.user);
         } else {
-          console.log("🔧 DEBUG: No user found on initialization");
+          console.log(
+            "🔧 DEBUG: Not authenticated (this is normal for first visit)"
+          );
           setUser(null);
         }
       } catch (error) {
@@ -47,10 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log("🔧 DEBUG: Attempting login for:", email);
 
-      const userData = await apiLogin(email, password);
-      console.log("🔧 DEBUG: Login successful:", userData.email);
+      const response = await fetch(
+        "https://authbase-pro.onrender.com/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      setUser(userData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Login failed");
+      }
+
+      const data = await response.json();
+      console.log("🔧 DEBUG: Login successful:", data.user.email);
+
+      setUser(data.user);
     } catch (error) {
       console.error("🔧 DEBUG: Login failed:", error);
       throw error;
@@ -68,10 +90,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log("🔧 DEBUG: Attempting registration for:", email);
 
-      const userData = await apiRegister(email, password, name);
-      console.log("🔧 DEBUG: Registration successful:", userData.email);
+      const response = await fetch(
+        "https://authbase-pro.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ email, password, name }),
+        }
+      );
 
-      setUser(userData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Registration failed");
+      }
+
+      const data = await response.json();
+      console.log("🔧 DEBUG: Registration successful:", data.user.email);
+
+      setUser(data.user);
     } catch (error) {
       console.error("🔧 DEBUG: Registration error:", error);
       throw error;
@@ -83,7 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async (): Promise<void> => {
     try {
       console.log("🔧 DEBUG: Logging out user");
-      await apiLogout();
+      await fetch("https://authbase-pro.onrender.com/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (error) {
       console.error("🔧 DEBUG: Logout error:", error);
     } finally {

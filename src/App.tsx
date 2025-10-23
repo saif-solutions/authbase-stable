@@ -1,14 +1,19 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthProvider";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<div>MINIMAL APP - NO LOOPS</div>} />
-        <Route path="/login" element={<div>LOGIN PAGE</div>} />
-        <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route
+            path="/"
+            element={<div>WITH AUTH PROVIDER - CHECK FOR LOOPS</div>}
+          />
+          <Route path="/login" element={<div>LOGIN PAGE</div>} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

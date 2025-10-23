@@ -1,70 +1,104 @@
-import { useState, useEffect, ReactNode } from "react";
-import { AuthContext, AuthContextType } from "./AuthContext";
-import { User, LoginCredentials } from "@/types/api";
-import { authAPI } from "@/services/authAPI";
+import { useEffect, useState, ReactNode } from "react";
+import { AuthContext, AuthContextType, User } from "./AuthContext";
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getCurrentUser,
+} from "../services/authAPI";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Check if user is already logged in on app start
   useEffect(() => {
-    // Only run auth check once
-    if (hasCheckedAuth) return;
-
-    const initAuth = async () => {
+    const initializeAuth = async () => {
       try {
-        console.log("🔧 DEBUG: Initial auth check");
-        const response = await authAPI.getCurrentUser();
-        console.log("🔧 DEBUG: Auth check successful", response.data.user);
-        setUser(response.data.user);
-      } catch {
-        console.log(
-          "🔧 DEBUG: Not authenticated (this is normal for first visit)"
-        );
-        // User is not logged in, which is fine
+        console.log("🔧 DEBUG: Initializing auth state...");
+        const userData = await getCurrentUser();
+
+        if (userData) {
+          console.log(
+            "🔧 DEBUG: User found on initialization:",
+            userData.email
+          );
+          setUser(userData);
+        } else {
+          console.log("🔧 DEBUG: No user found on initialization");
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("🔧 DEBUG: Auth initialization error:", error);
+        setUser(null);
       } finally {
         setIsLoading(false);
-        setHasCheckedAuth(true);
+        setIsInitialized(true);
+        console.log("🔧 DEBUG: Auth initialization complete");
       }
     };
 
-    initAuth();
-  }, [hasCheckedAuth]); // Only depend on hasCheckedAuth
+    initializeAuth();
+  }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
-      console.log("🔧 DEBUG: Attempting login with:", credentials);
-      const response = await authAPI.login(credentials);
-      console.log("🔧 DEBUG: Login response:", response);
+      setIsLoading(true);
+      console.log("🔧 DEBUG: Attempting login for:", email);
 
-      // Backend sets token as HTTP-only cookie, so we don't need to store it
-      // Just set the user data from response
-      setUser(response.data.user);
-      setHasCheckedAuth(true); // Mark as checked to prevent further auth calls
+      const userData = await apiLogin(email, password);
+      console.log("🔧 DEBUG: Login successful:", userData.email);
+
+      setUser(userData);
     } catch (error) {
       console.error("🔧 DEBUG: Login failed:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const logout = async () => {
+  const register = async (
+    email: string,
+    password: string,
+    name: string
+  ): Promise<void> => {
     try {
-      await authAPI.logout();
+      setIsLoading(true);
+      console.log("🔧 DEBUG: Attempting registration for:", email);
+
+      const userData = await apiRegister(email, password, name);
+      console.log("🔧 DEBUG: Registration successful:", userData.email);
+
+      setUser(userData);
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("🔧 DEBUG: Registration error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      console.log("🔧 DEBUG: Logging out user");
+      await apiLogout();
+    } catch (error) {
+      console.error("🔧 DEBUG: Logout error:", error);
     } finally {
       setUser(null);
-      setHasCheckedAuth(false); // Reset auth check state
-      window.location.href = "/login";
+      console.log("🔧 DEBUG: User logged out locally");
     }
   };
 
   const value: AuthContextType = {
     user,
-    login,
-    logout,
     isLoading,
+    isInitialized,
+    login,
+    register,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

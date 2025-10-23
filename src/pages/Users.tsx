@@ -8,7 +8,6 @@ import {
   Filter,
   Download,
   Mail,
-  Phone,
   Calendar,
   CheckCircle,
   XCircle,
@@ -47,6 +46,30 @@ interface UserUpdate {
   role?: string;
   isActive?: boolean;
 }
+
+// Backend User interface (what your API actually returns)
+interface BackendUser {
+  id: string;
+  email: string;
+  name?: string;
+  emailVerified: boolean;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+// Adapter function to convert backend user to frontend user
+const adaptBackendUserToFrontend = (backendUser: BackendUser): User => {
+  return {
+    id: backendUser.id,
+    name: backendUser.name || backendUser.email.split("@")[0],
+    email: backendUser.email,
+    role: "User", // Default role since backend doesn't provide it
+    status: "Active", // Default status
+    lastLogin: backendUser.lastLogin || new Date().toISOString(),
+    createdAt: backendUser.createdAt,
+    verified: backendUser.emailVerified,
+  };
+};
 
 // Edit User Modal Component
 const EditUserModal = ({
@@ -147,8 +170,13 @@ export function Users() {
     const fetchUsers = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const response = await authAPI.getUsers();
-        setUsers(response.data.users);
+        // Transform backend users to match frontend type
+        const adaptedUsers = response.data.users.map(
+          adaptBackendUserToFrontend
+        );
+        setUsers(adaptedUsers);
       } catch (err) {
         console.error("Failed to fetch users:", err);
         setError("Failed to load users");
@@ -177,17 +205,7 @@ export function Users() {
       if (response.ok) {
         const data = await response.json();
         // Transform the backend response to match our frontend User type
-        const updatedUser: User = {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          phone: data.user.phone,
-          role: data.user.role as "Admin" | "User" | "Moderator",
-          status: data.user.status as "Active" | "Inactive",
-          lastLogin: data.user.lastLogin,
-          createdAt: data.user.createdAt,
-          verified: data.user.verified,
-        };
+        const updatedUser: User = adaptBackendUserToFrontend(data.user);
         setUsers(
           users.map((user) => (user.id === userId ? updatedUser : user))
         );
@@ -539,12 +557,6 @@ export function Users() {
                             <Mail className="h-3 w-3" />
                             {user.email}
                           </div>
-                          {user.phone && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                              <Phone className="h-3 w-3" />
-                              {user.phone}
-                            </div>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="py-4">

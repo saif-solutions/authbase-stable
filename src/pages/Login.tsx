@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
-import { Shield, Mail, Lock, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Shield, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,31 +10,163 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+type AuthMode = "login" | "register" | "forgot-password";
+
 export function Login() {
+  const [activeTab, setActiveTab] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate(); // Add this hook
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 8;
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
+    if (!validateEmail(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Change this line - pass separate arguments instead of object
       await login(email, password);
       toast.success("Login successful!");
-      // Navigate to dashboard after successful login
       navigate("/dashboard");
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateEmail(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!name.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await register(email, password, name);
+      toast.success(
+        "Registration successful! Please check your email for verification."
+      );
+      navigate("/dashboard");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.";
+      toast.error(errorMessage);
+      console.error("Registration error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateEmail(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        "https://authbase-pro.onrender.com/api/auth/forgot-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Password reset instructions sent to your email");
+        setActiveTab("login");
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to send reset instructions");
+      }
+    } catch (error) {
+      toast.error("Failed to send reset instructions. Please try again.");
+      console.error("Forgot password error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    switch (activeTab) {
+      case "login":
+        return handleLogin(e);
+      case "register":
+        return handleRegister(e);
+      case "forgot-password":
+        return handleForgotPassword(e);
+    }
+  };
+
+  const getSubmitButtonText = () => {
+    if (isLoading) {
+      return (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          {activeTab === "login" && "Signing in..."}
+          {activeTab === "register" && "Creating account..."}
+          {activeTab === "forgot-password" && "Sending instructions..."}
+        </>
+      );
+    }
+
+    switch (activeTab) {
+      case "login":
+        return "Sign In";
+      case "register":
+        return "Create Account";
+      case "forgot-password":
+        return "Send Reset Instructions";
     }
   };
 
@@ -49,54 +181,177 @@ export function Login() {
             AuthBase Pro
           </CardTitle>
           <CardDescription className="dark:text-gray-400">
-            Sign in to your admin dashboard
+            Secure authentication system
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as AuthMode)}
+          >
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="forgot-password">Reset</TabsTrigger>
+            </TabsList>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Field - Common to all tabs */}
+              <div className="space-y-2">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
+
+              {/* Name Field - Register only */}
+              {activeTab === "register" && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Full name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
               )}
-            </Button>
-          </form>
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            <p>Demo credentials:</p>
-            <p className="font-mono bg-gray-100 dark:bg-gray-700 p-2 rounded mt-1">
-              Any email / any password
-            </p>
-          </div>
+
+              {/* Password Fields - Login and Register */}
+              {(activeTab === "login" || activeTab === "register") && (
+                <>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-gray-500 dark:text-gray-400"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {activeTab === "login" && (
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("forgot-password")}
+                          className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password - Register only */}
+                  {activeTab === "register" && (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10 pr-10"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-3 top-3 text-gray-500 dark:text-gray-400"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Forgot Password Instructions */}
+              {activeTab === "forgot-password" && (
+                <div className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                  Enter your email address and we'll send you instructions to
+                  reset your password.
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {getSubmitButtonText()}
+              </Button>
+            </form>
+
+            {/* Tab-specific footer messages */}
+            <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+              {activeTab === "login" && (
+                <p>
+                  Don't have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("register")}
+                    className="text-blue-600 hover:text-blue-500 font-medium dark:text-blue-400"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              )}
+              {activeTab === "register" && (
+                <p>
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("login")}
+                    className="text-blue-600 hover:text-blue-500 font-medium dark:text-blue-400"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              )}
+              {activeTab === "forgot-password" && (
+                <p>
+                  Remember your password?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("login")}
+                    className="text-blue-600 hover:text-blue-500 font-medium dark:text-blue-400"
+                  >
+                    Back to login
+                  </button>
+                </p>
+              )}
+            </div>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

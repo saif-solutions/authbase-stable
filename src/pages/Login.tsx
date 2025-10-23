@@ -35,7 +35,27 @@ export function Login() {
   };
 
   const validatePassword = (password: string) => {
-    return password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+    const isLongEnough = password.length >= 8;
+
+    return {
+      isValid:
+        hasUpperCase &&
+        hasLowerCase &&
+        hasNumbers &&
+        hasSpecialChar &&
+        isLongEnough,
+      requirements: {
+        hasUpperCase,
+        hasLowerCase,
+        hasNumbers,
+        hasSpecialChar,
+        isLongEnough,
+      },
+    };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -67,8 +87,21 @@ export function Login() {
       return;
     }
 
-    if (!validatePassword(password)) {
-      toast.error("Password must be at least 8 characters long");
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      const missingRequirements = [];
+      if (!passwordValidation.requirements.hasUpperCase)
+        missingRequirements.push("uppercase letter");
+      if (!passwordValidation.requirements.hasLowerCase)
+        missingRequirements.push("lowercase letter");
+      if (!passwordValidation.requirements.hasNumbers)
+        missingRequirements.push("number");
+      if (!passwordValidation.requirements.hasSpecialChar)
+        missingRequirements.push("special character");
+      if (!passwordValidation.requirements.isLongEnough)
+        missingRequirements.push("8 characters minimum");
+
+      toast.error(`Password must contain: ${missingRequirements.join(", ")}`);
       return;
     }
 
@@ -293,6 +326,10 @@ export function Login() {
                             <Eye className="h-4 w-4" />
                           )}
                         </button>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Password must contain: uppercase, lowercase, number,
+                        special character, and be at least 8 characters long.
                       </div>
                     </div>
                   )}

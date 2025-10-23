@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AuthBase Pro - EMERGENCY</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .container {
+        text-align: center;
+        padding: 2rem;
+      }
+      h1 {
+        color: #3b82f6;
+        margin-bottom: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚨 Emergency Mode</h1>
+      <p>Redirect loop detected and broken</p>
+      <p>Check the console - refresh should be stopped</p>
+    </div>
+
+    <script>
+      console.log("🛑 EMERGENCY: Page loaded successfully without React");
+      console.log("📍 Current URL:", window.location.href);
+
+      // Block any redirects
+      window.location.replace = function () {
+        console.log("🚫 Redirect blocked");
+        return false;
+      };
+
+      // Stop any meta refreshes
+      const metaRefresh = document.querySelector('meta[http-equiv="refresh"]');
+      if (metaRefresh) {
+        metaRefresh.remove();
+        console.log("🚫 Meta refresh removed");
+      }
+    </script>
+  </body>
+</html>

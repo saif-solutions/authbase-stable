@@ -70,6 +70,8 @@ export const authAPI = {
   // Sessions
   getSessions: () => api.get<{ sessions: Session[] }>("/sessions"),
 
+  getCurrentUser: () => api.get<{ user: User }>("/auth/me"),
+
   revokeSession: (sessionId: string) => api.delete(`/sessions/${sessionId}`),
 
   // Analytics

@@ -1,74 +1,63 @@
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext, AuthContextType } from "./AuthContext";
 import { User, LoginCredentials } from "@/types/api";
+import { authAPI } from "@/services/authAPI";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
+    // Only run auth check once
+    if (hasCheckedAuth) return;
+
     const initAuth = async () => {
-      const token = localStorage.getItem("authToken");
-      if (token) {
-        try {
-          // In a real app, you'd verify the token with the backend
-          // For now, we'll use mock user data
-          const mockUser: User = {
-            id: "1",
-            name: "Admin User",
-            email: "admin@authbase.com",
-            role: "Admin",
-            status: "Active",
-            lastLogin: new Date().toISOString(),
-            createdAt: "2024-01-10T14:20:00Z",
-            verified: true,
-          };
-          setUser(mockUser);
-        } catch (error) {
-          console.error("Token validation failed:", error);
-          localStorage.removeItem("authToken");
-        }
+      try {
+        console.log("🔧 DEBUG: Initial auth check");
+        const response = await authAPI.getCurrentUser();
+        console.log("🔧 DEBUG: Auth check successful", response.data.user);
+        setUser(response.data.user);
+      } catch {
+        console.log(
+          "🔧 DEBUG: Not authenticated (this is normal for first visit)"
+        );
+        // User is not logged in, which is fine
+      } finally {
+        setIsLoading(false);
+        setHasCheckedAuth(true);
       }
-      setIsLoading(false);
     };
 
     initAuth();
-  }, []);
+  }, [hasCheckedAuth]); // Only depend on hasCheckedAuth
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      // For demo purposes, we'll simulate API call
-      // In real app: const response = await authAPI.login(credentials);
+      console.log("🔧 DEBUG: Attempting login with:", credentials);
+      const response = await authAPI.login(credentials);
+      console.log("🔧 DEBUG: Login response:", response);
 
-      // Mock login - accept any credentials
-      const mockUser: User = {
-        id: "1",
-        name: "Admin User",
-        email: credentials.email,
-        role: "Admin",
-        status: "Active",
-        lastLogin: new Date().toISOString(),
-        createdAt: "2024-01-10T14:20:00Z",
-        verified: true,
-      };
-
-      const mockToken = "mock-jwt-token-" + Date.now();
-
-      localStorage.setItem("authToken", mockToken);
-      setUser(mockUser);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Backend sets token as HTTP-only cookie, so we don't need to store it
+      // Just set the user data from response
+      setUser(response.data.user);
+      setHasCheckedAuth(true); // Mark as checked to prevent further auth calls
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("🔧 DEBUG: Login failed:", error);
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("authToken");
-    setUser(null);
-    window.location.href = "/login";
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setHasCheckedAuth(false); // Reset auth check state
+      window.location.href = "/login";
+    }
   };
 
   const value: AuthContextType = {

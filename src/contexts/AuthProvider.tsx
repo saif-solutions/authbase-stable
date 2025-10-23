@@ -39,6 +39,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (
+    email: string,
+    password: string,
+    name: string
+  ): Promise<void> => {
+    try {
+      setIsLoading(true);
+      console.log("🔧 DEBUG: Attempting registration for:", email);
+
+      const response = await fetch(
+        "https://authbase-pro.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ email, password, name }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Registration failed");
+      }
+
+      const data = await response.json();
+      console.log("🔧 DEBUG: Registration successful:", data.user.email);
+
+      setUser(data.user);
+    } catch (error) {
+      console.error("🔧 DEBUG: Registration error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       console.log("🔧 DEBUG: Logging out user");
@@ -57,9 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     isLoading,
-    isInitialized: true, // Set to true since we're not doing initial check
+    isInitialized: true,
     login,
-    register: login, // Temporary - use login for register
+    register, // FIXED: Now calls the actual register function
     logout,
   };
 

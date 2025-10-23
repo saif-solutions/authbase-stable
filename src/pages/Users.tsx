@@ -163,7 +163,7 @@ export function Users() {
   const handleEditUser = async (userId: string, updates: UserUpdate) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/users/${userId}`,
+        `https://authbase-pro.onrender.com/api/users/${userId}`,
         {
           method: "PUT",
           headers: {
@@ -213,7 +213,7 @@ export function Users() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/users/${userId}`,
+        `https://authbase-pro.onrender.com/api/users/${userId}`,
         {
           method: "DELETE",
           credentials: "include",

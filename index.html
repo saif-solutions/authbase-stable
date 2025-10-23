@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -9,5 +9,57 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Add this right before </body> in your index.html -->
+    <script>
+      console.log("🔄 Page loaded at:", new Date().toISOString());
+      console.log("📍 Current path:", window.location.pathname);
+      setInterval(() => {
+        console.log(
+          "⏰ Still on:",
+          window.location.pathname,
+          "at:",
+          new Date().toISOString()
+        );
+      }, 1000);
+    </script>
+    <script>
+      console.log(
+        "🔍 DEBUG: Page loaded at:",
+        new Date().toISOString(),
+        "Path:",
+        window.location.pathname
+      );
+
+      // Track all navigation
+      let lastPath = window.location.pathname;
+      const observer = new MutationObserver(() => {
+        const currentPath = window.location.pathname;
+        if (currentPath !== lastPath) {
+          console.log("🔄 NAVIGATION: from", lastPath, "to", currentPath);
+          lastPath = currentPath;
+        }
+      });
+
+      observer.observe(document, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        characterData: true,
+      });
+
+      // Track history changes
+      const originalPushState = history.pushState;
+      history.pushState = function (...args) {
+        console.log("📜 HISTORY PUSH:", args[2]);
+        return originalPushState.apply(this, args);
+      };
+
+      const originalReplaceState = history.replaceState;
+      history.replaceState = function (...args) {
+        console.log("📜 HISTORY REPLACE:", args[2]);
+        return originalReplaceState.apply(this, args);
+      };
+    </script>
   </body>
 </html>

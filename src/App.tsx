@@ -78,5 +78,6 @@ function App() {
     </>
   );
 }
-
+// Add at the very top of your main.tsx or App.tsx
+console.log("🔍 DEBUG: App starting at:", window.location.pathname);
 export default App;

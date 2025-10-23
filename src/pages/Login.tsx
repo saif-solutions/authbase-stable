@@ -25,7 +25,8 @@ export function Login() {
     setIsLoading(true);
 
     try {
-      await login({ email, password });
+      // Change this line - pass separate arguments instead of object
+      await login(email, password);
       toast.success("Login successful!");
       // Navigate to dashboard after successful login
       navigate("/dashboard");

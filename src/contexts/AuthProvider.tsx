@@ -90,11 +90,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         credentials: "include",
       });
+
+      // Clear local state immediately
+      setUser(null);
+
+      // Force navigation to login
+      window.location.href = "/login";
     } catch (error) {
       console.error("🔧 DEBUG: Logout error:", error);
-    } finally {
+      // Still clear state and redirect even if API call fails
       setUser(null);
-      console.log("🔧 DEBUG: User logged out locally");
+      window.location.href = "/login";
     }
   };
 

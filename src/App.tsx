@@ -10,6 +10,7 @@ import { Settings } from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import { Toaster } from "@/components/ui/Toaster";
+import { EmailVerification } from "./pages/EmailVerification";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route
               path="/"
               element={

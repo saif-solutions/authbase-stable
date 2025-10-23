@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthProvider";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { Layout } from "./components/layout/Layout";
 import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
@@ -18,24 +17,58 @@ function App() {
       <Router>
         <AuthProvider>
           <Routes>
+            {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+
+            {/* Protected routes - NO PROTECTED ROUTE WRAPPER */}
             <Route
-              path="/*"
+              path="/"
               element={
-                <ProtectedRoute>
-                  <Layout>
-                    <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/users" element={<Users />} />
-                      <Route path="/sessions" element={<Sessions />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/" element={<Dashboard />} />
-                    </Routes>
-                  </Layout>
-                </ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <Layout>
+                  <Users />
+                </Layout>
+              }
+            />
+            <Route
+              path="/sessions"
+              element={
+                <Layout>
+                  <Sessions />
+                </Layout>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <Layout>
+                  <Analytics />
+                </Layout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <Layout>
+                  <Settings />
+                </Layout>
               }
             />
           </Routes>

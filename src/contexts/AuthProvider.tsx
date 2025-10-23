@@ -1,21 +1,9 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useState, ReactNode } from "react";
 import { AuthContext, AuthContextType, User } from "./AuthContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Check if user is already logged in on app start
-  useEffect(() => {
-    // TEMPORARY FIX: Skip auth check completely to break the loop
-    console.log("🔧 DEBUG: SKIPPING auth check to break redirect loop");
-    setIsLoading(false);
-    setIsInitialized(true);
-    setUser(null); // Assume not logged in initially
-
-    // We'll enable proper auth check after login is working
-  }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
@@ -51,44 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (
-    email: string,
-    password: string,
-    name: string
-  ): Promise<void> => {
-    try {
-      setIsLoading(true);
-      console.log("🔧 DEBUG: Attempting registration for:", email);
-
-      const response = await fetch(
-        "https://authbase-pro.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ email, password, name }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Registration failed");
-      }
-
-      const data = await response.json();
-      console.log("🔧 DEBUG: Registration successful:", data.user.email);
-
-      setUser(data.user);
-    } catch (error) {
-      console.error("🔧 DEBUG: Registration error:", error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const logout = async (): Promise<void> => {
     try {
       console.log("🔧 DEBUG: Logging out user");
@@ -107,9 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     isLoading,
-    isInitialized,
+    isInitialized: true, // Set to true since we're not doing initial check
     login,
-    register,
+    register: login, // Temporary - use login for register
     logout,
   };
 

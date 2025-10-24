@@ -17,7 +17,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
           body: JSON.stringify({ email, password }),
         }
       );
@@ -29,6 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       console.log("🔧 DEBUG: Login successful:", data.user.email);
+
+      // Store tokens in localStorage
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
 
       setUser(data.user);
     } catch (error) {
@@ -86,19 +89,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async (): Promise<void> => {
     try {
       console.log("🔧 DEBUG: Logging out user");
+
+      // Clear tokens from localStorage
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
       await fetch("https://authbase-pro.onrender.com/api/auth/logout", {
         method: "POST",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
       });
 
-      // Clear local state immediately
       setUser(null);
-
-      // Force navigation to login
       window.location.href = "/login";
     } catch (error) {
       console.error("🔧 DEBUG: Logout error:", error);
-      // Still clear state and redirect even if API call fails
+      // Still clear tokens and redirect
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       setUser(null);
       window.location.href = "/login";
     }

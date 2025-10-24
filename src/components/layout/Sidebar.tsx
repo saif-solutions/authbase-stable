@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -17,7 +18,16 @@ const navigation = [
 ];
 
 export function Sidebar() {
+  const { user } = useAuth();
   const location = useLocation();
+
+  const getUserDisplayName = () => {
+    return user?.name || user?.email || "User";
+  };
+
+  const getUserInitial = () => {
+    return (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase();
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-gray-900 border-r border-gray-800">
@@ -65,13 +75,17 @@ export function Sidebar() {
       <div className="border-t border-gray-800 p-4">
         <div className="flex items-center space-x-3">
           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
-            <span className="text-sm font-medium text-white">A</span>
+            <span className="text-sm font-medium text-white">
+              {getUserInitial()}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
-              Admin User
+              {getUserDisplayName()}
             </p>
-            <p className="text-xs text-gray-400 truncate">admin@authbase.com</p>
+            <p className="text-xs text-gray-400 truncate">
+              {user?.email || "No email"}
+            </p>
           </div>
         </div>
       </div>

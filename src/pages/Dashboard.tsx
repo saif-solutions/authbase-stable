@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useAuth";
 import {
   Users,
   Shield,
@@ -10,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export function Dashboard() {
+  const { user } = useAuth();
+
   const metrics = [
     {
       title: "Total Users",
@@ -70,11 +73,15 @@ export function Dashboard() {
     },
     {
       action: "API key generated",
-      user: "admin@authbase.com",
+      user: user?.email || "admin@authbase.com",
       time: "2 hours ago",
       status: "success",
     },
   ];
+
+  const getUserDisplayName = () => {
+    return user?.name || user?.email?.split("@")[0] || "User";
+  };
 
   return (
     <div className="space-y-6">
@@ -85,7 +92,7 @@ export function Dashboard() {
             Dashboard Overview
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Welcome to your AuthBase Pro administration panel
+            Welcome back, {getUserDisplayName()}
           </p>
         </div>
         <Badge

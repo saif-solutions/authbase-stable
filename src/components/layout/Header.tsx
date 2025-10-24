@@ -9,10 +9,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "react-router-dom"; // Add this import
+import { Link } from "react-router-dom";
 
 export function Header() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const getUserDisplayName = () => {
+    return user?.name || user?.email?.split("@")[0] || "User";
+  };
+
+  const getUserInitial = () => {
+    return (user?.name?.[0] || user?.email?.[0] || "U").toUpperCase();
+  };
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -22,7 +30,7 @@ export function Header() {
           Dashboard
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Welcome back, Admin
+          Welcome back, {getUserDisplayName()}
         </p>
       </div>
 
@@ -84,14 +92,16 @@ export function Header() {
               className="flex items-center space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2"
             >
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
-                <span className="text-sm font-semibold text-white">A</span>
+                <span className="text-sm font-semibold text-white">
+                  {getUserInitial()}
+                </span>
               </div>
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Admin User
+                  {getUserDisplayName()}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Super Admin
+                  {user?.email || "No email"}
                 </p>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -103,12 +113,16 @@ export function Header() {
           >
             <DropdownMenuItem className="cursor-pointer flex items-center gap-2 dark:hover:bg-gray-700">
               <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
-                <span className="text-xs font-semibold text-white">A</span>
+                <span className="text-xs font-semibold text-white">
+                  {getUserInitial()}
+                </span>
               </div>
               <div>
-                <p className="font-medium dark:text-white">Admin User</p>
+                <p className="font-medium dark:text-white">
+                  {getUserDisplayName()}
+                </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  admin@authbase.com
+                  {user?.email || "No email"}
                 </p>
               </div>
             </DropdownMenuItem>

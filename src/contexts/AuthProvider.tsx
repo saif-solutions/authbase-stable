@@ -28,12 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       console.log("🔧 DEBUG: Login successful:", data.user.email);
+      console.log("🔧 DEBUG: User data received:", data.user);
 
-      // Store tokens in localStorage
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
-
+      // Make sure we're using the actual user from the response
       setUser(data.user);
+
+      // Store tokens
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
     } catch (error) {
       console.error("🔧 DEBUG: Login failed:", error);
       throw error;
@@ -58,11 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include",
           body: JSON.stringify({
             email,
             password,
-            confirmPassword: password, // ← ADD THIS LINE
+            confirmPassword: password,
             name,
           }),
         }
@@ -70,14 +73,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.log("🔧 DEBUG: Backend validation errors:", errorData);
         throw new Error(errorData.error || "Registration failed");
       }
 
       const data = await response.json();
       console.log("🔧 DEBUG: Registration successful:", data.user.email);
+      console.log("🔧 DEBUG: User data received:", data.user);
 
+      // Make sure we're using the actual user from the response
       setUser(data.user);
+
+      // Store tokens
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
     } catch (error) {
       console.error("🔧 DEBUG: Registration error:", error);
       throw error;
@@ -118,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     isInitialized: true,
     login,
-    register, // FIXED: Now calls the actual register function
+    register,
     logout,
   };
 

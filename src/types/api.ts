@@ -46,3 +46,27 @@ export interface Analytics {
   dailyRequests: number;
   successRate: number;
 }
+
+// Add to your existing api.ts
+export interface BusinessMetrics {
+  totalRevenue: number;
+  activeLicenses: number;
+  totalCustomers: number;
+  successRate: number;
+  systemUptime: number;
+  dailyRevenue: number;
+  licenseTiers: {
+    pro: number;
+    enterprise: number;
+    elite: number;
+  };
+  revenueTrend: "up" | "down" | "stable";
+  kpis: {
+    mrr: number;
+    arr: number;
+    churnRate: number;
+    customerLifetimeValue: number;
+  };
+  timestamp: string;
+  timeRange: string;
+}

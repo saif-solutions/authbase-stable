@@ -5,12 +5,13 @@ import { Dashboard } from "./pages/Dashboard";
 import { Login } from "./pages/Login";
 import { Users } from "./pages/Users";
 import { Sessions } from "./pages/Sessions";
-import { Analytics } from "./pages/Analytics";
+import Analytics from "./pages/Analytics";
 import { Settings } from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import { Toaster } from "@/components/ui/Toaster";
 import { EmailVerification } from "./pages/EmailVerification";
+import CustomerPortal from "./pages/CustomerPortal";
 
 function App() {
   return (
@@ -67,6 +68,14 @@ function App() {
               element={
                 <Layout>
                   <Settings />
+                </Layout>
+              }
+            />
+            <Route
+              path="/customer-portal"
+              element={
+                <Layout>
+                  <CustomerPortal />
                 </Layout>
               }
             />

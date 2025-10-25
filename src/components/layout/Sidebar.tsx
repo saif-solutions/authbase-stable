@@ -6,6 +6,7 @@ import {
   Settings,
   Shield,
   BarChart3,
+  Key,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -14,6 +15,7 @@ const navigation = [
   { name: "Users", href: "/users", icon: Users },
   { name: "Sessions", href: "/sessions", icon: Shield },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Customer Portal", href: "/customer-portal", icon: Key },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

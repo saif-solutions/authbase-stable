@@ -15,6 +15,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  verify2FA: (token: string) => Promise<void>; // Add this line
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(

@@ -13,8 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import TwoFAVerify from "@/components/TwoFactorAuth/TwoFAVerify";
 
 type AuthMode = "login" | "register" | "forgot-password";
+
+interface TwoFAState {
+  required: boolean;
+  userEmail: string;
+}
 
 export function Login() {
   const [activeTab, setActiveTab] = useState<AuthMode>("login");
@@ -25,8 +31,9 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [twoFA, setTwoFA] = useState<TwoFAState | null>(null);
 
-  const { login, register } = useAuth();
+  const { login, register, verify2FA } = useAuth();
   const navigate = useNavigate();
 
   const validateEmail = (email: string) => {
@@ -72,11 +79,42 @@ export function Login() {
       toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-      console.error("Login error:", error);
+      if (error instanceof Error && error.message === "2FA_REQUIRED") {
+        // Show 2FA verification component
+        const pendingUserEmail = localStorage.getItem("pendingUserEmail");
+        setTwoFA({
+          required: true,
+          userEmail: pendingUserEmail || email,
+        });
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+        console.error("Login error:", error);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handle2FASuccess = async (token: string) => {
+    setIsLoading(true);
+    try {
+      await verify2FA(token);
+      toast.success("Login successful!");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error("2FA verification failed. Please try again.");
+      console.error("2FA verification error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setTwoFA(null);
+    // Clear pending 2FA data
+    localStorage.removeItem("temp2FAToken");
+    localStorage.removeItem("pendingUserEmail");
+    localStorage.removeItem("pendingUserId");
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -145,7 +183,7 @@ export function Login() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://authbase-pro.onrender.com/api/auth/forgot-password",
+        "http://localhost:5000/api/auth/forgot-password",
         {
           method: "POST",
           headers: {
@@ -202,6 +240,18 @@ export function Login() {
         return "Send Reset Instructions";
     }
   };
+
+  // If 2FA is required, show verification component
+  if (twoFA?.required) {
+    return (
+      <TwoFAVerify
+        temp2FAToken={localStorage.getItem("temp2FAToken") || ""}
+        userEmail={twoFA.userEmail}
+        onVerificationSuccess={handle2FASuccess}
+        onBack={handleBackToLogin}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">

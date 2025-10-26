@@ -8,16 +8,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      console.log("🔧 DEBUG: Attempting login for:", email);
 
       const response = await fetch(
-        "https://authbase-pro.onrender.com/api/auth/login",
+        "http://localhost:5000/api/auth/login", // Changed to localhost for testing
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, password }),
+          credentials: "include", // Important for cookies
         }
       );
 
@@ -27,8 +27,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      console.log("🔧 DEBUG: Login successful:", data.user.email);
-      console.log("🔧 DEBUG: User data received:", data.user);
+
+      // Check if 2FA is required
+      if (data.requires2FA) {
+        console.log("🔧 DEBUG: 2FA required, storing temp token");
+        // Store 2FA data for verification
+        localStorage.setItem("temp2FAToken", data.temp2FAToken);
+        localStorage.setItem("pendingUserEmail", data.user.email);
+        localStorage.setItem("pendingUserId", data.user.id);
+
+        // Throw special error to trigger 2FA flow
+        throw new Error("2FA_REQUIRED");
+      }
 
       // Make sure we're using the actual user from the response
       setUser(data.user);
@@ -46,6 +56,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const verify2FA = async (token: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+
+      const temp2FAToken = localStorage.getItem("temp2FAToken");
+      if (!temp2FAToken) {
+        throw new Error("No pending 2FA verification");
+      }
+
+      const response = await fetch(
+        "http://localhost:5000/api/auth/2fa/verify",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ temp2FAToken, token }),
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "2FA verification failed");
+      }
+
+      const data = await response.json();
+
+      // Set user and store tokens
+      setUser(data.user);
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
+
+      // Clear 2FA pending data
+      localStorage.removeItem("temp2FAToken");
+      localStorage.removeItem("pendingUserEmail");
+      localStorage.removeItem("pendingUserId");
+    } catch (error) {
+      console.error("🔧 DEBUG: 2FA verification failed:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (
     email: string,
     password: string,
@@ -53,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ): Promise<void> => {
     try {
       setIsLoading(true);
-      console.log("🔧 DEBUG: Attempting registration for:", email);
 
       const response = await fetch(
         "https://authbase-pro.onrender.com/api/auth/register",
@@ -77,8 +133,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const data = await response.json();
-      console.log("🔧 DEBUG: Registration successful:", data.user.email);
-      console.log("🔧 DEBUG: User data received:", data.user);
 
       // Make sure we're using the actual user from the response
       setUser(data.user);
@@ -98,8 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
-      console.log("🔧 DEBUG: Logging out user");
-
       // Clear tokens from localStorage
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
@@ -130,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    verify2FA,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

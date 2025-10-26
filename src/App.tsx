@@ -12,6 +12,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import { Toaster } from "@/components/ui/Toaster";
 import { EmailVerification } from "./pages/EmailVerification";
 import CustomerPortal from "./pages/CustomerPortal";
+import AdminProducts from "./pages/AdminProducts";
 
 function App() {
   return (
@@ -68,6 +69,14 @@ function App() {
               element={
                 <Layout>
                   <Settings />
+                </Layout>
+              }
+            />
+            <Route
+              path="/admin-products"
+              element={
+                <Layout>
+                  <AdminProducts />
                 </Layout>
               }
             />

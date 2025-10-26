@@ -15,6 +15,16 @@ export interface Product {
   has_pending_requisition?: boolean;
   recent_purchases?: string;
   available_packages?: string;
+  // Add admin-specific properties
+  commercial_metrics?: {
+    total_purchases: string;
+    unique_customers: string;
+    average_revenue_per_sale: string | null;
+    total_revenue: string | null;
+  };
+  demand_metrics?: {
+    pending_requisitions: string;
+  };
 }
 
 export interface CommercialMetrics {

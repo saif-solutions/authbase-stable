@@ -20,6 +20,8 @@ const Pricing: React.FC = () => {
         "test@example.com"
       );
 
+      console.log("Full API Response:", response); // Debug log
+
       // The response has success field and data wrapper
       if (response.success && response.data) {
         const allProducts = [
@@ -27,6 +29,21 @@ const Pricing: React.FC = () => {
           ...response.data.product_catalog.available_products,
           ...response.data.product_catalog.upcoming_products,
         ];
+
+        console.log(
+          "Owned products:",
+          response.data.product_catalog.owned_products
+        );
+        console.log(
+          "Available products:",
+          response.data.product_catalog.available_products
+        );
+        console.log(
+          "Upcoming products:",
+          response.data.product_catalog.upcoming_products
+        );
+        console.log("Combined products:", allProducts);
+
         setProducts(allProducts);
       } else {
         setError("Failed to load products: Invalid response format");
@@ -223,23 +240,29 @@ const Pricing: React.FC = () => {
                   Features
                 </h3>
                 <ul className="mt-4 space-y-3">
-                  {product.features.map((feature) => (
-                    <li key={feature} className="flex space-x-3">
-                      <svg
-                        className="flex-shrink-0 h-5 w-5 text-green-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="text-sm text-gray-500">{feature}</span>
+                  {product.features &&
+                    product.features.map((feature) => (
+                      <li key={feature} className="flex space-x-3">
+                        <svg
+                          className="flex-shrink-0 h-5 w-5 text-green-500"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-sm text-gray-500">{feature}</span>
+                      </li>
+                    ))}
+                  {(!product.features || product.features.length === 0) && (
+                    <li className="text-sm text-gray-400">
+                      No features listed
                     </li>
-                  ))}
+                  )}
                 </ul>
               </div>
             </div>

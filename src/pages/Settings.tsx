@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Save, Bell, Shield, Database, Globe, Key } from "lucide-react";
+import { User, Save, Bell, Shield, Database, Globe, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,6 +11,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SocialAccountsSettings } from "@/components/settings/SocialAccountsSettings";
+import { toast } from "sonner";
 
 export function Settings() {
   const [settings, setSettings] = useState({
@@ -38,7 +40,8 @@ export function Settings() {
   });
 
   const handleSave = () => {
-    // In a real app, this would save to your backend
+    // Show success message
+    toast.success("Settings saved successfully!");
     console.log("Saving settings:", settings);
   };
 
@@ -67,7 +70,7 @@ export function Settings() {
         </Button>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue="account" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-gray-800">
           <TabsTrigger
             value="general"
@@ -75,6 +78,13 @@ export function Settings() {
           >
             <Globe className="h-4 w-4" />
             General
+          </TabsTrigger>
+          <TabsTrigger
+            value="account"
+            className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:dark:bg-gray-700"
+          >
+            <User className="h-4 w-4" />
+            Account
           </TabsTrigger>
           <TabsTrigger
             value="security"
@@ -153,6 +163,81 @@ export function Settings() {
                   }
                   className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Account Settings */}
+        <TabsContent value="account" className="space-y-4">
+          <Card className="border-gray-200 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 dark:text-white">
+                <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                Account Settings
+              </CardTitle>
+              <CardDescription className="dark:text-gray-400">
+                Manage your personal account settings and connected services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium dark:text-white">
+                  Profile Information
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName" className="dark:text-gray-300">
+                      Display Name
+                    </Label>
+                    <input
+                      id="displayName"
+                      placeholder="Your display name"
+                      className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="dark:text-gray-300">
+                      Email Address
+                    </Label>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      className="w-full h-10 px-3 rounded-md border border-gray-300 bg-white text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Accounts Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium dark:text-white">
+                  Connected Accounts
+                </h3>
+                <SocialAccountsSettings />
+              </div>
+
+              {/* Account Actions Section */}
+              <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-medium dark:text-white">
+                  Account Actions
+                </h3>
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Change Password
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    Delete Account
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

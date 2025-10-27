@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { EmailVerification } from "./pages/EmailVerification";
 import CustomerPortal from "./pages/CustomerPortal";
 import AdminProducts from "./pages/AdminProducts";
+import { OAuthSuccess } from "./pages/OAuthSuccess";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/oauth-success" element={<OAuthSuccess />} />
             <Route
               path="/"
               element={

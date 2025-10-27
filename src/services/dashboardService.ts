@@ -1,7 +1,44 @@
 import api from "./api";
 
 export interface DashboardData {
-  plan: {
+  user?: {
+    email: string;
+    emailVerified: boolean;
+    twoFactorEnabled: boolean;
+    authType: string;
+    isOAuthUser: boolean;
+  };
+  subscription?: {
+    status: string;
+    plan: string;
+    name: string;
+    price: number;
+    rateLimit: number;
+    maxTokens: number;
+    permissions: string[];
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  };
+  usage?: {
+    totalTokens: number;
+    activeTokens: number;
+    totalRequests: number;
+    tokensLimit: number;
+    tokensUsed?: number;
+  };
+  tokens?: Array<{
+    id: string;
+    name: string;
+    prefix: string;
+    permissions: string[];
+    rateLimit: number;
+    lastUsedAt: string | null;
+    usageCount: number;
+    recentUsage?: number;
+    isActive: boolean;
+    createdAt: string;
+  }>;
+  plan?: {
     id: string;
     name: string;
     description: string;
@@ -11,23 +48,9 @@ export interface DashboardData {
     maxTokens: number;
     permissions: string[];
   };
-  tokens: Array<{
-    id: string;
-    name: string;
-    prefix: string;
-    permissions: string[];
-    rateLimit: number;
-    lastUsedAt: string | null;
-    usageCount: number;
-    recentUsage: number;
-    isActive: boolean;
-    createdAt: string;
-  }>;
-  usage: {
-    totalRequests: number;
-    tokensUsed: number;
-    tokensLimit: number;
-  };
+  // Fallback indicator
+  _fallback?: boolean;
+  _message?: string;
 }
 
 export const dashboardService = {

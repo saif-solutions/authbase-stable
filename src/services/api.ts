@@ -9,10 +9,19 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to include CSRF token
+// Request interceptor to include Auth token and CSRF token
 api.interceptors.request.use(
   async (config) => {
-    // Try to get CSRF token from cookie or localStorage
+    // Get authentication token from localStorage
+    const getAuthToken = () => {
+      return (
+        localStorage.getItem("token") ||
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("token")
+      );
+    };
+
+    // Get CSRF token from cookie or localStorage
     const getCsrfToken = () => {
       return (
         localStorage.getItem("csrfToken") ||
@@ -23,10 +32,26 @@ api.interceptors.request.use(
       );
     };
 
+    const authToken = getAuthToken();
     const csrfToken = getCsrfToken();
+
+    // Add Authorization header if token exists
+    if (authToken) {
+      config.headers["Authorization"] = `Bearer ${authToken}`;
+    }
+
+    // Add CSRF token for non-GET requests
     if (csrfToken && config.method !== "get") {
       config.headers["X-CSRF-Token"] = csrfToken;
     }
+
+    console.log(
+      `🔐 API Request: ${config.method?.toUpperCase()} ${config.url}`,
+      {
+        hasAuth: !!authToken,
+        hasCSRF: !!csrfToken,
+      }
+    );
 
     return config;
   },
@@ -37,12 +62,28 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
   (error) => {
+    console.error(
+      `❌ API Error: ${error.response?.status} ${error.config?.url}`,
+      error.response?.data
+    );
+
     if (error.response?.status === 401) {
-      // Redirect to login or refresh token
-      localStorage.removeItem("authToken");
-      window.location.href = "/login";
+      // Clear auth data and redirect to login
+      localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userEmail");
+      sessionStorage.removeItem("token");
+
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

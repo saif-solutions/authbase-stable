@@ -1,28 +1,110 @@
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { AuthContext, AuthContextType, User } from "./AuthContext";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize auth state on app start
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = async () => {
+    try {
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+      if (token) {
+        // Try to get user data from backend
+        try {
+          const response = await fetch("http://localhost:5000/api/auth/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            // If backend call fails, use stored data
+            const storedUserData = localStorage.getItem("userData");
+            const storedEmail = localStorage.getItem("userEmail");
+
+            if (storedUserData) {
+              setUser(JSON.parse(storedUserData));
+            } else if (storedEmail) {
+              // Fallback for OAuth users
+              setUser({
+                id: "oauth-user",
+                email: storedEmail,
+                name: storedEmail.split("@")[0], // Generate name from email
+                emailVerified: true,
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+        } catch (error) {
+          console.log("Failed to fetch user data, using stored data:", error);
+          // Use stored data as fallback
+          const storedUserData = localStorage.getItem("userData");
+          const storedEmail = localStorage.getItem("userEmail");
+
+          if (storedUserData) {
+            setUser(JSON.parse(storedUserData));
+          } else if (storedEmail) {
+            setUser({
+              id: "oauth-user",
+              email: storedEmail,
+              name: storedEmail.split("@")[0],
+              emailVerified: true,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Auth initialization error:", error);
+    } finally {
+      setIsLoading(false);
+      setIsInitialized(true);
+    }
+  };
+
+  const setToken = (token: string) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("accessToken", token);
+  };
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/login", // Changed to localhost for testing
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-          credentials: "include", // Important for cookies
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Handle OAuth user specific error
+        if (errorData.code === "OAUTH_USER_NO_PASSWORD") {
+          const providers = errorData.availableProviders || ["social"];
+          const providerNames = providers
+            .map((p: string) => p.charAt(0).toUpperCase() + p.slice(1))
+            .join(" or ");
+          throw new Error(`Please login with your ${providerNames} account`);
+        }
+
         throw new Error(errorData.error || "Login failed");
       }
 
@@ -31,26 +113,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if 2FA is required
       if (data.requires2FA) {
         console.log("🔧 DEBUG: 2FA required, storing temp token");
-        // Store 2FA data for verification
         localStorage.setItem("temp2FAToken", data.temp2FAToken);
         localStorage.setItem("pendingUserEmail", data.user.email);
         localStorage.setItem("pendingUserId", data.user.id);
-
-        // Throw special error to trigger 2FA flow
         throw new Error("2FA_REQUIRED");
       }
 
-      // Make sure we're using the actual user from the response
+      // Set user and store data
       setUser(data.user);
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      localStorage.setItem("userEmail", data.user.email);
 
       // Store tokens
-      if (data.accessToken && data.refreshToken) {
+      if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("token", data.accessToken);
+      }
+      if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      // Fix the any type here
       console.error("🔧 DEBUG: Login failed:", error);
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error("Login failed. Please check your credentials.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +173,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
 
-      // Set user and store tokens
+      // Set user and store data
       setUser(data.user);
-      if (data.accessToken && data.refreshToken) {
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      localStorage.setItem("userEmail", data.user.email);
+
+      // Store tokens
+      if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("token", data.accessToken);
+      }
+      if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
 
@@ -111,21 +207,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
-      const response = await fetch(
-        "https://authbase-pro.onrender.com/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            confirmPassword: password,
-            name,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          confirmPassword: password,
+          name,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -134,12 +227,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
 
-      // Make sure we're using the actual user from the response
+      // Set user and store data
       setUser(data.user);
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      localStorage.setItem("userEmail", data.user.email);
 
       // Store tokens
-      if (data.accessToken && data.refreshToken) {
+      if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("token", data.accessToken);
+      }
+      if (data.refreshToken) {
         localStorage.setItem("refreshToken", data.refreshToken);
       }
     } catch (error) {
@@ -152,24 +250,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
-      // Clear tokens from localStorage
+      // Clear all stored data
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("temp2FAToken");
+      localStorage.removeItem("pendingUserEmail");
+      localStorage.removeItem("pendingUserId");
 
-      await fetch("https://authbase-pro.onrender.com/api/auth/logout", {
+      // Call backend logout
+      await fetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
+        credentials: "include",
       });
 
       setUser(null);
       window.location.href = "/login";
     } catch (error) {
       console.error("🔧 DEBUG: Logout error:", error);
-      // Still clear tokens and redirect
+      // Still clear all data and redirect
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("userEmail");
       setUser(null);
       window.location.href = "/login";
     }
@@ -178,11 +284,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextType = {
     user,
     isLoading,
-    isInitialized: true,
+    isInitialized,
     login,
     register,
     logout,
     verify2FA,
+    setToken, // Add setToken method
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

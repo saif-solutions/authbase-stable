@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -102,6 +103,9 @@ export function Dashboard() {
           Live Data
         </Badge>
       </div>
+
+      {/* API Usage Dashboard */}
+      <DashboardOverview />
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

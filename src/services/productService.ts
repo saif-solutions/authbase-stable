@@ -6,9 +6,9 @@ export interface Product {
   description: string;
   type: string;
   category: string;
-  base_price: string;
+  basePrice: string;
   currency: string;
-  billing_interval: string;
+  billingInterval: string;
   features: string[];
   status: string;
   is_purchased?: boolean;
@@ -50,7 +50,7 @@ export interface CustomerDashboard {
       package_name: string;
       final_price: number;
       currency: string;
-      billing_interval: string;
+      billingInterval: string;
       purchased_at: string;
     }>;
     product_usage: Array<{
@@ -93,7 +93,7 @@ export interface CreateProductData {
   description: string;
   type: string;
   category: string;
-  base_price: number;
+  basePrice: number;
   status?: string;
   features: string[];
   target_audience: string[];

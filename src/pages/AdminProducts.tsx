@@ -175,7 +175,7 @@ const AdminProducts: React.FC = () => {
                         {product.status}
                       </Badge>
                       <span className="text-sm text-gray-500">
-                        ${product.base_price}/{product.billing_interval}
+                        ${product.basePrice}/{product.billingInterval}
                       </span>
                     </div>
                   </div>
